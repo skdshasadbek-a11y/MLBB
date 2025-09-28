@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Гайды и Новости про MLBB</title>
+<style>
+  :root{
+    --bg:#0b0b0b;
+    --accent:#ff2b2b;
+  }
+  body{
+    margin:0;
+    font-family: Inter, system-ui, Arial;
+    background:linear-gradient(180deg,#071026 0%, #0b0b0b 100%);
+    color:#e6eef8;
+    display:flex;
+    min-height:100vh;
+    align-items:center;
+    justify-content:center;
+    gap:1rem;
+    padding:2rem;
+    box-sizing:border-box;
+  }
+  .card{
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.04);
+    padding:1.25rem;
+    border-radius:12px;
+    width:100%;
+    max-width:720px;
+    box-shadow:0 8px 30px rgba(2,6,23,0.6);
+  }
+  h1{ margin:0 0 0.5rem 0; font-size:1.25rem;}
+  p{ margin:0 0 1rem 0; color:#cbdff6; }
+  .controls{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+  button{
+    background:var(--accent);
+    color:white;
+    border:0;
+    padding:.6rem .9rem;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    box-shadow:0 6px 18px rgba(255,43,43,0.14);
+  }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+  label{ font-size:.95rem; display:flex; gap:.5rem; align-items:center; }
+  input[type="checkbox"]{ width:18px; height:18px; }
+
+  /* Overlay screamer */
+  .screamer-overlay{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:radial-gradient(circle at center, rgba(255,0,10,0.85), rgba(0,0,0,0.8));
+    z-index:10000;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity .12s ease;
+  }
+  .screamer-overlay.show{ visibility:visible; opacity:1; transition:opacity .06s ease; }
+  .screamer-face{
+    font-size:14vmin;
+    transform:scale(0.9);
+    filter:drop-shadow(0 8px 18px rgba(0,0,0,0.6));
+    animation:pop .25s ease forwards;
+  }
+  @keyframes pop {
+    0% { transform: scale(.6) rotate(-8deg); opacity:0; filter:blur(6px); }
+    60% { transform: scale(1.12) rotate(4deg); opacity:1; filter:blur(0); }
+    100% { transform: scale(1) rotate(0); opacity:1; }
+  }
+  .close-small{
+    position:fixed;
+    right:14px;
+    top:14px;
+    background:rgba(0,0,0,0.35);
+    color:white;
+    padding:.35rem .6rem;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.06);
+    cursor:pointer;
+    z-index:10010;
+  }
+
+  .muted-note{ font-size:.85rem; color:#ffd6d6; margin-top:.6rem; }
+</style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="title">
+    <h1 id="title">Новости и гайды в мире MLBB</h1>
+    <p>Ниже: то что нужно прочитать и принать!</p>
+
+    <div class="controls">
+      <label><input type="checkbox" id="consent"> Я понимаю, что принимаю соглашения</label>
+      <button id="trigger" disabled>Нажми — если прочитали и согласны</button>
+      <button id="test-sound">тест на работу сайта и сеовера</button>
+    </div>
+
+    <p class="muted-note">Совет: сначала протестируйте сайт на сабильный звук и соединение.</p>
+    <p style="margin-top:.6rem; font-size:.9rem; color:#ffdcdc;">
+      ВАЖНО: не одовайте никакие ваши даные и ключевые коды!
+    </p>
+  </main>
+
+  <!-- Overlay -->
+  <div id="overlay" class="screamer-overlay" role="dialog" aria-hidden="true">
+    <button id="close" class="close-small" aria-label="Закрыть">Закрыть</button>
+    <div class="screamer-face" aria-hidden="true">👁️‍🗨️</div>
+  </div>
+
+<script>
+const consent = document.getElementById('consent');
+const trigger = document.getElementById('trigger');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('close');
+const testBtn = document.getElementById('test-sound');
+
+consent.addEventListener('change', () => {
+  trigger.disabled = !consent.checked;
+});
+
+// Тихий тест звука
+testBtn.addEventListener('click', () => {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = 440;
+  osc.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.2);
+});
+
+// Основной скриммер
+trigger.addEventListener('click', () => {
+  overlay.classList.add('show');
+
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Белый шум
+  const noise = ctx.createBufferSource();
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0; i<data.length; i++) data[i] = Math.random() * 2 - 1;
+  noise.buffer = buffer;
+
+  // Тон
+  const osc = ctx.createOscillator();
+  osc.type = 'square';
+  osc.frequency.value = 1000;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.5;
+
+  noise.connect(gain);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  noise.start();
+  osc.start();
+  noise.stop(ctx.currentTime + 0.3);
+  osc.stop(ctx.currentTime + 0.3);
+});
+
+// Закрытие
+closeBtn.addEventListener('click', () => overlay.classList.remove('show'));
+</script>
+</body>
+</html>
