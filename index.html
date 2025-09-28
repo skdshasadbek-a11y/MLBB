@@ -142,18 +142,21 @@ trigger.addEventListener('click', () => {
 
   // Белый шум
   const noise = ctx.createBufferSource();
-  const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * 1.2, ctx.sampleRate); // 1.2 сек
   const data = buffer.getChannelData(0);
   for(let i=0; i<data.length; i++) data[i] = Math.random() * 2 - 1;
   noise.buffer = buffer;
 
+
   // Тон
   const osc = ctx.createOscillator();
   osc.type = 'square';
-  osc.frequency.value = 1000;
+  osc.frequency.value = 1500;
 
-  const gain = ctx.createGain();
-  gain.gain.value = 0.5;
+
+ const gain = ctx.createGain();
+  gain.gain.setValueAtTime(10, ctx.currentTime); // громко
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 10); // плавное затухание
 
   noise.connect(gain);
   osc.connect(gain);
@@ -161,10 +164,9 @@ trigger.addEventListener('click', () => {
 
   noise.start();
   osc.start();
-  noise.stop(ctx.currentTime + 0.3);
-  osc.stop(ctx.currentTime + 0.3);
+  noise.stop(ctx.currentTime + 50);
+  osc.stop(ctx.currentTime + 100);
 });
-
 // Закрытие
 closeBtn.addEventListener('click', () => overlay.classList.remove('show'));
 </script>
